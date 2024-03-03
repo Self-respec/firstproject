@@ -1,0 +1,89 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+from PIL import Image, ImageDraw, ImageFont, ImageTk
+
+class TextToImageConverterApp:
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.title("Text to Image Converter")
+
+        # Input frame
+        self.input_frame = ttk.Frame(self.root, padding="20")
+        self.input_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+
+        ttk.Label(self.input_frame, text="Enter text:").grid(row=0, column=0, sticky="w")
+        self.text_entry = ttk.Entry(self.input_frame, width=40)
+        self.text_entry.grid(row=0, column=1, padx=(5, 0), sticky="ew")
+
+        ttk.Label(self.input_frame, text="Font Size:").grid(row=1, column=0, sticky="w")
+        self.font_size_scale = ttk.Scale(self.input_frame, from_=1, to=50, orient="horizontal")
+        self.font_size_scale.grid(row=1, column=1, padx=(5, 0), sticky="ew")
+        self.font_size_scale.bind("<Up>", self.increase_font_size)
+        self.font_size_scale.bind("<Down>", self.decrease_font_size)
+
+        ttk.Label(self.input_frame, text="Font Color:").grid(row=2, column=0, sticky="w")
+        self.font_color_entry = ttk.Entry(self.input_frame)
+        self.font_color_entry.grid(row=2, column=1, padx=(5, 0), sticky="ew")
+
+        # Button to convert text to image
+        self.convert_button = ttk.Button(self.input_frame, text="Convert", command=self.convert_text_to_image)
+        self.convert_button.grid(row=3, column=0, columnspan=2, pady=(10, 0))
+
+        # Display frame for the image
+        self.display_frame = ttk.Frame(self.root, padding="20")
+        self.display_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
+
+        # Label to display the image
+        self.image_label = ttk.Label(self.display_frame, borderwidth=2, relief="solid")  # Add border to the label
+        self.image_label.grid(row=0, column=0)
+
+    def convert_text_to_image(self):
+        text = self.text_entry.get()
+
+        if not text:
+            messagebox.showwarning("Warning", "Please enter some text.")
+            return
+
+        font_size = int(self.font_size_scale.get())
+        font_color = self.font_color_entry.get()
+
+        try:
+            # Use a system font
+            font = ImageFont.load_default()
+        except OSError:
+            messagebox.showwarning("Warning", "Error loading system font.")
+            return
+
+        img = Image.new("RGB", (800, 600), (255, 255, 255))
+        draw = ImageDraw.Draw(img)
+
+        # Calculate text position for centering
+        text_bbox = draw.textbbox((0, 0), text, font=font)
+        x = (img.width - (text_bbox[2] - text_bbox[0])) // 2
+        y = (img.height - (text_bbox[3] - text_bbox[1])) // 2
+
+        # Draw text with specified color and font
+        draw.text((x, y), text, fill=font_color, font=font)
+
+        tk_img = ImageTk.PhotoImage(img)
+
+        self.image_label.configure(image=tk_img)
+        self.image_label.image = tk_img
+
+    def increase_font_size(self, event):
+        current_size = int(self.font_size_scale.get())
+        self.font_size_scale.set(current_size + 1)
+        self.convert_text_to_image()
+
+    def decrease_font_size(self, event):
+        current_size = int(self.font_size_scale.get())
+        if current_size > 1:
+            self.font_size_scale.set(current_size - 1)
+            self.convert_text_to_image()
+
+def main():
+    app = TextToImageConverterApp()
+    app.root.mainloop()
+
+if __name__ == "__main__":
+    main()
